@@ -1,0 +1,25 @@
+name: Schedule Rancher test on openqa.opensuse.org
+on:
+  push:
+    branches:
+      - o3_schedule
+  schedule:
+    - cron:  '0 6 * * MON'
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    container: registry.opensuse.org/devel/openqa/containers15.2/openqa_webui:latest
+    steps:
+      - name: Get latest Tumbleweed published build number
+        run: >
+          VALUE=`curl -s https://openqa.opensuse.org/group_overview/1.json
+          | jq -r '[.build_results[] | select(.tag.description=="published") |
+          select(.version=="Tumbleweed") | .build] | sort | reverse | .[0]'`;
+          echo ::set-output name=VALUE::$VALUE;
+        id: tumbleweedbuildnumber
+      - name: Run openqa-client
+        run: >
+          openqa-client isos post --apikey ${{ secrets.O3_APIKEY }} --apisecret ${{ secrets.O3_APISECRET }}
+          --host "openqa.opensuse.org" DISTRI=opensuse VERSION=Tumbleweed ARCH=x86_64 FLAVOR=DVD-rancher
+          HDD_1=opensuse-Tumbleweed-x86_64-${{ steps.tumbleweedbuildnumber.outputs.VALUE }}-Tumbleweed@64bit.qcow2
+          BUILD=`date +"%Y%m%d%H%M"`
