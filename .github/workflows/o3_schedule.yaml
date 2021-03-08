@@ -6,7 +6,21 @@ on:
   schedule:
     - cron:  '0 6 * * MON'
 jobs:
+  latest-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.3
+      - name: Get most recent image version
+        run: |
+          git clone https://github.com/rancher/rancher.git
+          cd rancher/
+          tag=$(git describe --tag $(git rev-list --tags --max-count=1))
+          echo $tag
+          docker manifest inspect rancher/rancher:$tag >/dev/null
+          STATUS=$?
+          echo ::set-output name=STATUS::$STATUS
   schedule:
+    needs: latest-version
     runs-on: ubuntu-latest
     container: registry.opensuse.org/devel/openqa/containers15.2/openqa_webui:latest
     steps:
@@ -18,8 +32,10 @@ jobs:
           echo ::set-output name=VALUE::$VALUE;
         id: tumbleweedbuildnumber
       - name: Run openqa-client
+        if: env.STATUS == '0'
         run: >
           openqa-client isos post --apikey ${{ secrets.O3_APIKEY }} --apisecret ${{ secrets.O3_APISECRET }}
           --host "openqa.opensuse.org" DISTRI=opensuse VERSION=Tumbleweed ARCH=x86_64 FLAVOR=DVD-rancher
           HDD_1=opensuse-Tumbleweed-x86_64-${{ steps.tumbleweedbuildnumber.outputs.VALUE }}-Tumbleweed@64bit.qcow2
           BUILD=`date +"%Y%m%d%H%M"`
+        
