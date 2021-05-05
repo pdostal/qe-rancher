@@ -17,5 +17,6 @@ QE Rancher - Repository for scheduling & scripts & documentation
 ## Authors
  * [Pavel Dostál](http://github.com/pdostal)
  * [George Gkioulis](https://github.com/ggkioulis)
+ * [Anna Minou](http://github.com/punkioudi)
  * [Ivan Lausuch](https://github.com/ilausuch)
  
