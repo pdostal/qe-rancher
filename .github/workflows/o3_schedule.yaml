@@ -31,11 +31,25 @@ jobs:
           select(.version=="Tumbleweed") | .build] | sort | reverse | .[0]'`;
           echo ::set-output name=VALUE::$VALUE;
         id: tumbleweedbuildnumber
-      - name: Run openqa-client
+      - name: Schedule Tumbleweed job
         if: env.STATUS == '0'
         run: >
           openqa-client isos post --apikey ${{ secrets.O3_APIKEY }} --apisecret ${{ secrets.O3_APISECRET }}
           --host "openqa.opensuse.org" DISTRI=opensuse VERSION=Tumbleweed ARCH=x86_64 FLAVOR=DVD-rancher
           HDD_1=opensuse-Tumbleweed-x86_64-${{ steps.tumbleweedbuildnumber.outputs.VALUE }}-Tumbleweed@64bit.qcow2
           BUILD=`date +"%Y%m%d%H%M"`
-        
+      - name: Get latest 15.3 published build number
+        run: >
+          VALUE=`curl -s https://openqa.opensuse.org/group_overview/50.json
+          | jq -r '[.build_results[] | select(.tag.description=="published") |
+          select(.version=="15.3") | .build] | sort | reverse | .[0]'`;
+          echo ::set-output name=VALUE::$VALUE;
+        id: leap153buildnumber
+     - name: Schedule 15.3 job
+       if: env.STATUS == '0'
+       run: >
+          openqa-client isos post --apikey ${{ secrets.O3_APIKEY }} --apisecret ${{ secrets.O3_APISECRET }}
+          --host "openqa.opensuse.org" DISTRI=opensuse VERSION='15.3' ARCH=x86_64 FLAVOR=DVD-rancher
+          HDD_1=opensuse-15.3-x86_64-${{ steps.leap153buildnumber.outputs.VALUE }}-gnome@64bit.qcow2
+          BUILD=`date +"%Y%m%d%H%M"`
+
