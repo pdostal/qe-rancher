@@ -26,8 +26,7 @@ jobs:
     steps:
       - name: Get rancher build number
         run: >
-          VALUE=`date +"%Y%m%d%H%M"`
-          echo ::set-output name=VAULE::$VALUE;
+          VALUE=`date +"%Y%m%d%H%M"`; echo ::set-output name=VALUE::$VALUE;
         id: rancherbuildnumber
       - name: Get latest Tumbleweed published build number
         run: >
