@@ -5,6 +5,7 @@ on:
       - o3_schedule
   schedule:
     - cron:  '0 6 * * MON'
+
 jobs:
   latest-version:
     runs-on: ubuntu-latest
@@ -22,12 +23,13 @@ jobs:
   schedule:
     needs: latest-version
     runs-on: ubuntu-latest
-    container: registry.opensuse.org/devel/openqa/containers15.2/openqa_webui:latest
+    container: registry.opensuse.org/devel/openqa/containers15.3/openqa_webui:latest
     steps:
       - name: Get rancher build number
         run: >
           VALUE=`date +"%Y%m%d%H%M"`; echo ::set-output name=VALUE::$VALUE;
         id: rancherbuildnumber
+
       - name: Get latest Tumbleweed published build number
         run: >
           VALUE=`curl -s https://openqa.opensuse.org/group_overview/1.json
@@ -35,13 +37,6 @@ jobs:
           select(.version=="Tumbleweed") | .build] | sort | reverse | .[0]'`;
           echo ::set-output name=VALUE::$VALUE;
         id: tumbleweedbuildnumber
-      - name: Schedule Tumbleweed job
-        if: env.STATUS == '0'
-        run: >
-          openqa-client isos post --apikey ${{ secrets.O3_APIKEY }} --apisecret ${{ secrets.O3_APISECRET }}
-          --host "openqa.opensuse.org" DISTRI=opensuse VERSION=Tumbleweed ARCH=x86_64 FLAVOR=DVD-rancher
-          HDD_1=opensuse-Tumbleweed-x86_64-${{ steps.tumbleweedbuildnumber.outputs.VALUE }}-Tumbleweed@64bit.qcow2
-          BUILD=${{ steps.rancherbuildnumber.outputs.VALUE }}-rancher-on-tumbleweed
       - name: Get latest 15.3 published build number
         run: >
           VALUE=`curl -s https://openqa.opensuse.org/group_overview/50.json
@@ -49,6 +44,14 @@ jobs:
           select(.version=="15.3") | .build] | sort | reverse | .[0]'`;
           echo ::set-output name=VALUE::$VALUE;
         id: leap153buildnumber
+
+      - name: Schedule Tumbleweed job
+        if: env.STATUS == '0'
+        run: >
+          openqa-client isos post --apikey ${{ secrets.O3_APIKEY }} --apisecret ${{ secrets.O3_APISECRET }}
+          --host "openqa.opensuse.org" DISTRI=opensuse VERSION=Tumbleweed ARCH=x86_64 FLAVOR=DVD-rancher
+          HDD_1=opensuse-Tumbleweed-x86_64-${{ steps.tumbleweedbuildnumber.outputs.VALUE }}-Tumbleweed@64bit.qcow2
+          BUILD=${{ steps.rancherbuildnumber.outputs.VALUE }}-rancher-on-tumbleweed
       - name: Schedule 15.3 job
         if: env.STATUS == '0'
         run: >
